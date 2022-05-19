@@ -37,6 +37,7 @@ bool validateParameter_sconfig(long sconfig)
     logger->println(is_valid ? "passed" : "failed");
     return is_valid;
 }
+
 bool validateParameter_sbaud(long sbaud)
 {
     logger->print("validate sbaud: ");
@@ -57,6 +58,7 @@ bool validateParameter_sbaud(long sbaud)
     logger->println(is_valid ? "passed" : "failed");
     return is_valid;
 }
+
 bool validateStringParameter(const String &param, unsigned min, unsigned max)
 {
     logger->print("validate string parameter: '" + param);
@@ -74,45 +76,50 @@ bool validateStringParameter(const String &param, unsigned min, unsigned max)
     logger->println("' passed");
     return true;
 }
+
 void Configuration::serialize(DynamicJsonDocument &document)
 {
     logger->println("serialize");
     document[FPSTR(HTML_ID_SBAUD)] = serialBaud;
     document[FPSTR(HTML_ID_SCONFIG)] = serialConfig;
-    document[FPSTR(HTML_ID_APSSID)] = APSSID;
-    document[FPSTR(HTML_ID_APPASS)] = APPassword;
-    document[FPSTR(HTML_ID_APCHANNEL)] = APchannel;
-    document[FPSTR(HTML_ID_APADDRESS)] = APaddress.toString();
+    // document[FPSTR(HTML_ID_APSSID)] = SSID;
+    // document[FPSTR(HTML_ID_APPASS)] = Password;
+    // document[FPSTR(HTML_ID_APCHANNEL)] = APchannel;
+    // document[FPSTR(HTML_ID_APADDRESS)] = APaddress.toString();
 }
+
 void Configuration::deserialize(DynamicJsonDocument &document)
 {
     logger->println("deserialize");
     serialBaud = document[FPSTR(HTML_ID_SBAUD)] | DEFAULT_BAUD_SERIAL;
     serialConfig = document[FPSTR(HTML_ID_SCONFIG)] | DEFAULT_SERIAL_CONFIG;
-    APSSID = document[FPSTR(HTML_ID_APSSID)].as<String>();
-    APSSID = APSSID.isEmpty() ? FPSTR(DEFAULT_AP_SSID) : APSSID;
-    APPassword = document[FPSTR(HTML_ID_APPASS)].as<String>();
-    APPassword = APPassword.isEmpty() ? FPSTR(DEFAULT_AP_PASS) : APPassword;
-    APchannel = document[FPSTR(HTML_ID_APCHANNEL)] | DEFAULT_AP_CHANNEL;
-    APaddress.fromString(document[FPSTR(HTML_ID_APADDRESS)].as<String>());
+    // SSID = document[FPSTR(HTML_ID_APSSID)].as<String>();
+    // SSID = SSID.isEmpty() ? FPSTR(DEFAULT_AP_SSID) : SSID;
+    // Password = document[FPSTR(HTML_ID_APPASS)].as<String>();
+    // Password = Password.isEmpty() ? FPSTR(DEFAULT_AP_PASS) : Password;
+    // APchannel = document[FPSTR(HTML_ID_APCHANNEL)] | DEFAULT_AP_CHANNEL;
+    // APaddress.fromString(document[FPSTR(HTML_ID_APADDRESS)].as<String>());
 }
+
 String Configuration::toUrlString()
 {
     String result;
     result += String(FPSTR(HTML_ID_SBAUD)) + "=" + String(serialBaud);
     result += "&" + String(FPSTR(HTML_ID_SCONFIG)) + "=" + String(serialConfig);
-    result += "&" + String(FPSTR(HTML_ID_APSSID)) + "=" + APSSID;
-    result += "&" + String(FPSTR(HTML_ID_APPASS)) + "=" + APPassword;
-    result += "&" + String(FPSTR(HTML_ID_APCHANNEL)) + "=" + String(APchannel);
-    result += "&" + String(FPSTR(HTML_ID_APADDRESS)) + "=" + APaddress.toString();
+    // result += "&" + String(FPSTR(HTML_ID_APSSID)) + "=" + APSSID;
+    // result += "&" + String(FPSTR(HTML_ID_APPASS)) + "=" + APPassword;
+    // result += "&" + String(FPSTR(HTML_ID_APCHANNEL)) + "=" + String(APchannel);
+    // result += "&" + String(FPSTR(HTML_ID_APADDRESS)) + "=" + APaddress.toString();
 
     return result;
 }
+
 void Configuration::fromUrlString(const String &parameters)
 {
     std::map<String, String> dict = deserializeKeyValue(parameters, "=", "&");
     fromMapping(dict);
 }
+
 void Configuration::fromMapping(const std::map<String, String> &mapping)
 {
     if (mapping.find(String(FPSTR(HTML_ID_SBAUD))) != mapping.end())
@@ -127,27 +134,29 @@ void Configuration::fromMapping(const std::map<String, String> &mapping)
         if (validateParameter_sconfig(sconfig))
             this->serialConfig = sconfig;
     }
-    if (mapping.find(String(FPSTR(HTML_ID_APSSID))) != mapping.end())
-    {
-        String ssid = mapping.at(FPSTR(HTML_ID_APSSID));
-        if (validateStringParameter(ssid, MIN_APSSID_LEN, MAX_APSSID_LEN))
-            APSSID = ssid;
-    }
-    if (mapping.find(String(FPSTR(HTML_ID_APPASS))) != mapping.end())
-    {
-        String pass = mapping.at(FPSTR(HTML_ID_APPASS));
-        if (validateStringParameter(pass, MIN_PASS_LEN, MAX_PASS_LEN))
-            APPassword = pass;
-    }
-    if (mapping.find(String(FPSTR(HTML_ID_APCHANNEL))) != mapping.end())
-    {
-        int channel = mapping.at(FPSTR(HTML_ID_APCHANNEL)).toInt();
-        if (channel > 0 && channel <= AP_MAX_CHANNEL)
-            APchannel = channel;
-    }
-    if (mapping.find(String(FPSTR(HTML_ID_APADDRESS))) != mapping.end())
-        APaddress.fromString(mapping.at(FPSTR(HTML_ID_APADDRESS)));
+    // if (mapping.find(String(FPSTR(HTML_ID_APSSID))) != mapping.end())
+    // {
+    //     String ssid = mapping.at(FPSTR(HTML_ID_APSSID));
+    //     if (validateStringParameter(ssid, MIN_APSSID_LEN, MAX_APSSID_LEN))
+    //         SSID = ssid;
+    // }
+    // if (mapping.find(String(FPSTR(HTML_ID_APPASS))) != mapping.end())
+    // {
+    //     String pass = mapping.at(FPSTR(HTML_ID_APPASS));
+    //     if (validateStringParameter(pass, MIN_PASS_LEN, MAX_PASS_LEN))
+    //         Password = pass;
+    // }
+    // if (mapping.find(String(FPSTR(HTML_ID_APCHANNEL))) != mapping.end())
+    // {
+    //     int channel = mapping.at(FPSTR(HTML_ID_APCHANNEL)).toInt();
+    //     if (channel > 0 && channel <= AP_MAX_CHANNEL)
+    //         APchannel = channel;
+    // }
+    // if (mapping.find(String(FPSTR(HTML_ID_APADDRESS))) != mapping.end()) {
+    //     APaddress.fromString(mapping.at(FPSTR(HTML_ID_APADDRESS)));
+    // }
 }
+
 bool JSONConfig::save(Configuration &data, File &configFile, size_t size)
 {
     bool success = false;
@@ -171,6 +180,7 @@ bool JSONConfig::save(Configuration &data, File &configFile, size_t size)
     }
     return success;
 }
+
 bool JSONConfig::load(Configuration &data, File &configFile, size_t size)
 {
     logger->println("loading configuration...");
@@ -195,6 +205,7 @@ bool JSONConfig::load(Configuration &data, File &configFile, size_t size)
     }
     return success;
 }
+
 bool JSONConfig::read(const String &configFileName, Configuration &config, size_t size)
 {
     bool success = false;
@@ -217,6 +228,7 @@ bool JSONConfig::read(const String &configFileName, Configuration &config, size_
     }
     return success;
 }
+
 bool JSONConfig::write(const String &configFileName, Configuration &config, size_t size)
 {
     bool success = false;

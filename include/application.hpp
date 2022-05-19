@@ -1,11 +1,14 @@
 #ifndef WIRELESS_TERMINAL_APPLICATION_H_INCLUDED
 #define WIRELESS_TERMINAL_APPLICATION_H_INCLUDED
+
 #pragma once
+
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266FtpServer.h>
+#include <WiFiManager.h>  
 #include <WebSocketsServer.h>
 #include <DNSServer.h>
 #include <Ticker.h>
@@ -33,21 +36,39 @@ static const char FTP_PASSWORD_[] PROGMEM = "admin";
 const IPAddress DEFAULT_AP_GATEWAY(0, 0, 0, 0);
 const IPAddress DEFAULT_AP_MASK(255, 255, 255, 0);
 const size_t STACK_MAX_SIZE = 512;
+
 #define DEFAULT_TERMINAL_SERVER_PORT 23
 #define WEB_SERVER_PORT 80
 #define DNS_SERVER_PORT 53
 #define CONFIG_SIZE 2048
-#define BLINK_SPEED_FAST 0.1f
-#define BLINK_SPEED_MIDDLE 0.5f
-#define BLINK_SPEED_SLOW 0.8f
 #define HTTP_SERVER_OK_ 200
 #define HTTP_SERVER_NOT_FOUND_ 404
-#define REBOOT_DELAY 5000
+#define REBOOT_DELAY 3000
 #define RX_BUFFER_SIZE 1024
 #define LINE_MAX 80
 #define WEBSOCKET_PORT_ 81
+#define PIN_UART0_RX 13   
+#define PIN_UART0_TX 15
 
-void changeBuilinLedState();
+#define PIN_STATUS_LED 12
+#define PIN_STATUS_LED_ON HIGH
+#define PIN_STATUS_LED_RGB 
+
+#ifdef PIN_STATUS_LED_RGB
+#include <FastLED.h>
+#endif
+
+#define LED_STATUSES_COUNT 6
+#define LED_STATUSES_STATES_COUNT 2
+
+enum ApplicationState {
+    NOT_READY,          // 0
+    READY,              // 1
+    CLIENT_CONNECTED,   // 2
+    CLIENT_RX,          // 3
+    CLIENT_TX,          // 4
+    ERROR               // 5
+};
 
 class Application
 {
@@ -57,15 +78,17 @@ public:
     void mainloop();
 
 protected:
+    ApplicationState _state;
+
     Configuration *_settings;
     WiFiClient _terminalClient;
     WiFiServer *_terminalServer;
     ESP8266WebServer *_WebServer;
+    WiFiManager* _wifiManager;
 
     WebSocketsServer *_webSockServer;
 
     FtpServer *_FTPServer;
-    Ticker *_blinker;
 
     void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
     String getContentType(const String &filename);
@@ -77,8 +100,9 @@ protected:
     void handleSettingsSave();
     void handleGetSettings();
     bool handleRoot();
-    bool startAP();
+    void startWifi();
     void halt();
+    void setState(ApplicationState);
 
 private:
     bool _terminalClientAlreadyConnected = false;

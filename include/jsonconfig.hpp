@@ -15,15 +15,18 @@
 #define MIN_PASS_LEN 8
 #define MAX_PASS_LEN 64
 #define AP_MAX_CHANNEL 13
+
 const unsigned int DEFAULT_SERIAL_CONFIG = SERIAL_8N1;
-static const char DEFAULT_AP_SSID[] PROGMEM = "WirelessTerminal";
-static const char DEFAULT_AP_PASS[] PROGMEM = "123456789";
+
+// static const char DEFAULT_AP_SSID[] PROGMEM = WIFI_SSID;
+// static const char DEFAULT_AP_PASS[] PROGMEM = WIFI_PASS;
+
 static const char HTML_ID_SBAUD[] PROGMEM = "baud";
 static const char HTML_ID_SCONFIG[] PROGMEM = "config";
-static const char HTML_ID_APSSID[] PROGMEM = "SSID";
-static const char HTML_ID_APPASS[] PROGMEM = "password";
-static const char HTML_ID_APCHANNEL[] PROGMEM = "channel";
-static const char HTML_ID_APADDRESS[] PROGMEM = "address";
+// static const char HTML_ID_APSSID[] PROGMEM = "SSID";
+// static const char HTML_ID_APPASS[] PROGMEM = "password";
+// static const char HTML_ID_APCHANNEL[] PROGMEM = "channel";
+// static const char HTML_ID_APADDRESS[] PROGMEM = "address";
 
 class Configuration
 {
@@ -31,10 +34,10 @@ public:
     unsigned long serialBaud = DEFAULT_BAUD_SERIAL;
     unsigned int serialConfig = DEFAULT_SERIAL_CONFIG;
 
-    String APSSID = FPSTR(DEFAULT_AP_SSID);
-    String APPassword = FPSTR(DEFAULT_AP_PASS);
-    unsigned int APchannel = DEFAULT_AP_CHANNEL;
-    IPAddress APaddress = IPAddress(192, 168, 4, 1);
+    // String SSID = FPSTR(DEFAULT_AP_SSID);
+    // String Password = FPSTR(DEFAULT_AP_PASS);
+    // unsigned int APchannel = DEFAULT_AP_CHANNEL;
+    // IPAddress APaddress = IPAddress(192, 168, 4, 1);
 
     void serialize(DynamicJsonDocument &document);
     void deserialize(DynamicJsonDocument &document);

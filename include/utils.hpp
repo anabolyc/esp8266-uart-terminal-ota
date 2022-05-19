@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <map>
+#include <string>
 #include "logger.hpp"
 
 std::map<String, String> deserializeKeyValue(const String &url,

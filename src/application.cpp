@@ -1,8 +1,62 @@
 #include "application.hpp"
 
-void changeBuilinLedState()
+uint32_t led_time_on = 0;
+uint32_t led_time_off = 0;
+Ticker *_blinker = new Ticker();
+
+#ifdef PIN_STATUS_LED_RGB
+uint32_t led_color = 0;
+#define PIN_STATUS_LED_COUNT 1
+CRGB leds[PIN_STATUS_LED_COUNT];
+#endif
+
+void changeStatusLedStateOn();
+void changeStatusLedStateOff();
+
+#ifdef PIN_STATUS_LED_RGB
+static uint32_t StatusLedBlinkTimings[LED_STATUSES_COUNT][LED_STATUSES_STATES_COUNT + 1] = {
+    // on, off - in milliseconds, color (R,G,B)
+    {1024, 16, 0x000080}, // NOT_READY
+    {16, 1024, 0x808000}, // READY
+    {256, 256, 0x800080}, // CLIENT_CONNECTED
+    {256, 0, 0x008000}, // CLIENT_RX
+    {256, 0, 0x000080}, // CLIENT_TX
+    {128, 128, 0x800000}  // ERROR
+};
+#else
+static uint32_t StatusLedBlinkTimings[LED_STATUSES_COUNT][LED_STATUSES_STATES_COUNT] = {
+    // on, off - in milliseconds
+    {1024, 16}, // NOT_READY
+    {16, 1024}, // READY
+    {256, 256}, // CLIENT_CONNECTED
+    {256, 0}, // CLIENT_RX
+    {256, 0}, // CLIENT_TX
+    {128, 128}, // ERROR
+};
+#endif
+
+void changeStatusLedStateOn()
 {
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    #ifdef PIN_STATUS_LED_RGB
+    for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
+        leds[0] = led_color;
+    FastLED.show();
+    #else 
+    digitalWrite(PIN_STATUS_LED, PIN_STATUS_LED_ON);
+    #endif
+    _blinker->once_ms(led_time_on, changeStatusLedStateOff);
+}
+
+void changeStatusLedStateOff()
+{
+    #ifdef PIN_STATUS_LED_RGB
+    for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
+        leds[0] = 0x0;
+    FastLED.show();
+    #else 
+    digitalWrite(PIN_STATUS_LED, !PIN_STATUS_LED_ON);
+    #endif
+    _blinker->once_ms(led_time_off, changeStatusLedStateOn);
 }
 
 Application::Application()
@@ -14,37 +68,74 @@ Application::Application()
 
     _WebServer = new ESP8266WebServer(WEB_SERVER_PORT);
     _FTPServer = new FtpServer();
-    _blinker = new Ticker();
-}
-bool Application::startAP()
-{
-    bool result = false;
-    WiFi.mode(WIFI_AP);
+    _wifiManager = new WiFiManager();
 
-    if (!WiFi.softAPConfig(_settings->APaddress, DEFAULT_AP_GATEWAY, DEFAULT_AP_MASK))
-    {
-        logger->println("AP Config Failed");
-    }
-    else if (WiFi.softAP(_settings->APSSID, _settings->APPassword, _settings->APchannel))
-    {
-        logger->println("\nnetwork " + _settings->APSSID + " running");
-        logger->println("AP IP address: " + WiFi.softAPIP().toString());
-        result = true;
-    }
-    else
-    {
-        logger->println("starting AP failed");
-    }
-    return result;
+    setState(NOT_READY);
 }
+
+void Application::setState(ApplicationState state) 
+{
+    if (state == _state)
+        return;
+
+    logger->printf("Status changed to %d\n", state);
+    _state = state;
+
+    if (_blinker->active())
+        _blinker->detach();
+
+    led_time_on = StatusLedBlinkTimings[(int)state][0];
+    led_time_off = StatusLedBlinkTimings[(int)state][1];
+    #ifdef PIN_STATUS_LED_RGB
+    led_color = StatusLedBlinkTimings[(int)state][2];
+    #endif
+
+    if (led_time_off == 0) {
+        // no need to switch off
+        #ifdef PIN_STATUS_LED_RGB
+        for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
+            leds[0] = led_color;
+        FastLED.show();
+        #else 
+        digitalWrite(PIN_STATUS_LED, PIN_STATUS_LED_ON);
+        #endif
+    } else if (led_time_on == 0) {
+        // no need to switch on
+        #ifdef PIN_STATUS_LED_RGB
+        for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
+            leds[0] = 0;
+        FastLED.show();
+        #else 
+        digitalWrite(PIN_STATUS_LED, !PIN_STATUS_LED_ON);
+        #endif
+    } else {
+        // trigger blinking
+        changeStatusLedStateOn();
+    }
+}
+
+void Application::startWifi() {
+    String ssid = "ESP-" + String(ESP.getChipId());
+    WiFi.hostname(ssid);
+
+    if(!_wifiManager->autoConnect()) {
+        logger->println("Failed to connect and hit timeout");
+        ESP.reset();
+    } else {
+        logger->print("Connected: ");
+        logger->println(WiFi.localIP());
+    }
+}
+
 void Application::halt()
 {
-    _blinker->attach(BLINK_SPEED_FAST, changeBuilinLedState);
+    setState(ERROR);
     logger->println("fatal error - rebooting...");
     delay(REBOOT_DELAY);
 
     ESP.reset();
 }
+
 String Application::getContentType(const String &filename)
 {
     if (filename.endsWith(".html"))
@@ -61,6 +152,7 @@ String Application::getContentType(const String &filename)
 
     return HTTP_TEXT_PLAIN;
 }
+
 void Application::handleNotFound()
 {
     if (!handleFileRead(_WebServer->uri()))
@@ -68,6 +160,7 @@ void Application::handleNotFound()
         _WebServer->send(HTTP_SERVER_NOT_FOUND_, FPSTR(HTTP_TEXT_PLAIN), FPSTR(HTTP_NOT_FOUND_TEXT));
     }
 }
+
 bool Application::handleFileRead(String path)
 {
     bool success = false;
@@ -78,6 +171,7 @@ bool Application::handleFileRead(String path)
     String contentType = getContentType(path);
     if (LittleFS.exists(path))
     {
+        // _WebServer->sendHeader("Cache-Control", "public, max-age=2678400\r\n");
         File file = LittleFS.open(path, "r");
         _WebServer->streamFile(file, contentType);
         file.close();
@@ -90,6 +184,7 @@ bool Application::handleFileRead(String path)
 
     return success;
 }
+
 void Application::handleSettingsSave()
 {
     logger->println("handle settings save");
@@ -105,6 +200,7 @@ void Application::handleSettingsSave()
     delay(REBOOT_DELAY);
     ESP.reset();
 }
+
 void Application::handleGetSettings()
 {
     logger->println("handle get settings");
@@ -115,6 +211,7 @@ void Application::handleGetSettings()
     serializeJson(doc, serializedData);
     _WebServer->send(HTTP_SERVER_OK_, FPSTR(HTTP_TEXT_PLAIN), serializedData);
 }
+
 void Application::handleTerminalClient()
 {
     if (_terminalServer->hasClient())
@@ -126,9 +223,15 @@ void Application::handleTerminalClient()
         }
         _terminalClient = _terminalServer->available();
         logger->println("Client connected to telnet server");
+        setState(CLIENT_CONNECTED);
     }
-    while (_terminalClient.available() && Serial.availableForWrite() > 0)
+
+    while (_terminalClient.available() && Serial.availableForWrite() > 0) {
+        ApplicationState prev_state = _state;
+        setState(CLIENT_TX);
         Serial.write(_terminalClient.read());
+        setState(prev_state);
+    }
 
     size_t maxToTcp = 0;
     if (_terminalClient)
@@ -148,39 +251,54 @@ void Application::handleTerminalClient()
     bufferLen = std::min(bufferLen, STACK_MAX_SIZE);
     if (bufferLen)
     {
+        ApplicationState prev_state = _state;
+        setState(CLIENT_RX);
         uint8_t buffer[bufferLen];
-        size_t serialGotBytesCount = Serial.readBytes(buffer, bufferLen);
+        int serialGotBytesCount = Serial.readBytes(buffer, bufferLen);
         if (_terminalClient.availableForWrite() >= serialGotBytesCount)
         {
-            size_t sended = _terminalClient.write(buffer, serialGotBytesCount);
-            if (sended != bufferLen)
+            size_t sent = _terminalClient.write(buffer, serialGotBytesCount);
+            if (sent != bufferLen)
             {
                 logger->printf("len mismatch: available:%zd serial-read:%zd tcp-write:%zd\n",
-                               bufferLen, serialGotBytesCount, sended);
+                               bufferLen, serialGotBytesCount, sent);
             }
         }
+        setState(prev_state);
     }
 }
+
 void Application::handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
     if (type == WStype_CONNECTED)
     {
         logger->printf("ws client #%u connected from:", num);
         logger->println(_webSockServer->remoteIP(num));
+        setState(CLIENT_CONNECTED);
     }
     else if (type == WStype_DISCONNECTED)
     {
         logger->printf("ws client #%u disconnected\n", num);
+        setState(READY);
     }
     else if (type == WStype_TEXT)
     {
+        ApplicationState prev_state = _state;
+        setState(CLIENT_TX);
         logger->write(payload, length);
         Serial.write(payload, length);
+        setState(prev_state);
     }
 }
+
 void Application::initialize()
 {
-    pinMode(LED_BUILTIN, OUTPUT);
+    #ifdef PIN_STATUS_LED_RGB
+    FastLED.addLeds<WS2812B, PIN_STATUS_LED, GRB>(leds, PIN_STATUS_LED_COUNT);
+    #else
+    pinMode(PIN_STATUS_LED, OUTPUT);
+    #endif
+
     logger->begin(DEFAULT_BAUD_LOGGER);
     logger->println(FPSTR(WELCOME_STRING));
 
@@ -189,31 +307,34 @@ void Application::initialize()
         logger->println("failed to mount FS");
         halt();
     }
+
     JSONConfig::read(FPSTR(CONFIG_FILENAME), *_settings, CONFIG_SIZE);
     Serial.begin(_settings->serialBaud);
-    Serial.swap();
+    Serial.pins(PIN_UART0_TX, PIN_UART0_RX);
     Serial.flush();
     Serial.setRxBufferSize(RX_BUFFER_SIZE);
 
-    if (startAP())
-        _blinker->attach(BLINK_SPEED_MIDDLE, changeBuilinLedState);
-    else
-        halt();
-
-    _WebServer->on(FPSTR(HTTP_SAVE_LINK), [&]() mutable { this->handleSettingsSave(); });
-    _WebServer->on(FPSTR(HTTP_CONF_LINK), [&]() mutable { this->handleGetSettings(); });
-    _WebServer->onNotFound([&]() mutable { handleNotFound();});
+    startWifi();
+    
+    setState(READY);
+    
+    _WebServer->on(FPSTR(HTTP_SAVE_LINK), [&]() mutable
+                   { this->handleSettingsSave(); });
+    _WebServer->on(FPSTR(HTTP_CONF_LINK), [&]() mutable
+                   { this->handleGetSettings(); });
+    _WebServer->onNotFound([&]() mutable
+                           { handleNotFound(); });
     _WebServer->begin();
 
     _terminalServer->begin();
     _terminalServer->setNoDelay(true);
     _FTPServer->begin(FPSTR(FTP_LOGIN_), FPSTR(FTP_PASSWORD_));
-    _blinker->detach();
 
     _webSockServer->begin();
-    _webSockServer->onEvent([&](uint8_t num, WStype_t type, uint8_t *payload, size_t length) mutable {
-         this->handleWebSocketEvent(num, type, payload, length); });
+    _webSockServer->onEvent([&](uint8_t num, WStype_t type, uint8_t *payload, size_t length) mutable
+                            { this->handleWebSocketEvent(num, type, payload, length); });
 }
+
 void Application::mainloop()
 {
     _webSockServer->loop();
@@ -222,51 +343,43 @@ void Application::mainloop()
     this->handleTerminalClient();
     this->handleWebConsole();
 }
+
 void Application::handleWebConsole()
 {
-    if(_terminalClient.connected())
+    if (_terminalClient.connected())
     {
         if (!_terminalClientAlreadyConnected)
         {
             _terminalClientAlreadyConnected = true;
-            _webSockServer->broadcastTXT(
-                "[[;red;]terminal client connected]");
+            _webSockServer->broadcastTXT("[[;red;]terminal client connected]");
+            setState(CLIENT_CONNECTED);
         }
         return; /* exit */
     }
-    else {
-        if(_terminalClientAlreadyConnected)
+    else
+    {
+        if (_terminalClientAlreadyConnected)
         {
             _terminalClientAlreadyConnected = false;
-            _webSockServer->broadcastTXT(
-                "[[;red;]terminal client disconnected]");
+            _webSockServer->broadcastTXT("[[;red;]terminal client disconnected]");
+            setState(READY);
         }
     }
+
+    ApplicationState prev_state = _state;
     static String line;
-    while(Serial.available())
+    while (Serial.available())
     {
+        setState(CLIENT_RX);
         char chr = Serial.read();
-        if((chr == '\n') || (line.length() >= LINE_MAX))
+        if ((chr == '\n') || (line.length() >= LINE_MAX))
         {
             _webSockServer->broadcastTXT(line);
             line.clear();
         }
         if (chr != '\n')
             line += chr;
-        
     }
-    // протестировать
-    // static char buffer[LINE_MAX];
-    // static size_t index = 0;
-    // while(Serial.available())
-    // {
-    //     char chr = Serial.read();
-    //     if((chr == '\n') || (index == LINE_MAX))
-    //     {
-    //         _webSockServer->broadcastTXT(buffer, index);
-    //         index = 0;
-    //     }
-    //     if(chr != '\n')
-    //         buffer[index++] = chr;
-    // }
+
+    setState(prev_state);
 }
