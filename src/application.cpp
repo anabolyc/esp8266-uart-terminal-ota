@@ -78,7 +78,7 @@ void Application::setState(ApplicationState state)
     if (state == _state)
         return;
 
-    logger->printf("Status changed to %d\n", state);
+    // logger->printf("Status changed to %d\n", state);
     _state = state;
 
     if (_blinker->active())
