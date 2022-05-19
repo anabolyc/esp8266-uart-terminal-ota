@@ -1,10 +1,12 @@
-## Wireless Terminal - simple, configurable with web, wifi to uart bridge based on ESP8266
+## Wireless Terminal - simple, configurable, self hosted, ESP8266 based WIFI-to-UART bridge
 
 Assume you have a serial accessible device (like Raspberry Pi or ESP32 node) that falls into boot loop. If for some reason it is not possible or not convinient to bring your laptop to the device proximity, you can attach Wireless Terminal to the device and connect to it via WiFi. Next you use ESP8266 hosted web-based  terminal as if you were connected directly.
 
+![image](https://user-images.githubusercontent.com/5459747/169392360-5300c240-e5a9-4d8c-8a79-1b298578029e.png)
+
 ## Features
 
-- Using WiFiManager for Wifi configuration - no hardcoded passwords. When run for the first time (or no known networks present), configure via captive portal, then settings are saved and ESP8266 will connect automatically.
+- Using [WiFiManager](https://github.com/tzapu/WiFiManager) for Wifi configuration - no hardcoded passwords. When run for the first time (or no known networks present), configure via captive portal, then settings are saved and ESP8266 will connect automatically.
 - Configure UART speed and bits/parity settings (saved between reboots)
 - RGB status led - flashes when client connects and when data going in both directions
 
@@ -23,6 +25,8 @@ RGB led is optional and attached to pin GPIO12. WS2812 led is expected, but if y
 #define PIN_STATUS_LED_RGB 
 ```
 
+![image](https://user-images.githubusercontent.com/5459747/169394145-747e7414-06ad-4911-90f0-c7dc639526ed.png)
+
 ## How to run
 
 - Build solution in platformio
@@ -36,3 +40,11 @@ RGB led is optional and attached to pin GPIO12. WS2812 led is expected, but if y
 
 The emulator is implemented using the **jQuery Terminal Emulator**: https://terminal.jcubic.pl/
 library
+
+### Config page
+
+![image](https://user-images.githubusercontent.com/5459747/169392681-18ed7ace-9172-488e-b64e-b60dbdd8a359.png)
+
+### Terminal page
+
+![simplescreenrecorder-2022-05-19_22.08.45.gif](./doc/simplescreenrecorder-2022-05-19_22.08.45.gif)
