@@ -60,4 +60,4 @@ I've developed custom PCB for this device. This is base don standard ESP12F modu
 
 ### Where to buy
 
-Soon to ba evailable on Tindie
+Soon to ba available on Tindie
