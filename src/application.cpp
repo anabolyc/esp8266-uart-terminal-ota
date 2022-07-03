@@ -379,6 +379,7 @@ void Application::handleWebConsole()
         }
         if (chr != '\n')
             line += chr;
+        logger->print(chr);
     }
 
     setState(prev_state);
