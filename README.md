@@ -1,5 +1,8 @@
 ## Wireless Terminal - simple, configurable, self hosted, ESP8266 based WIFI-to-UART bridge
 
+![Open Source Hardware](/doc/images/open-source-hardware-logo.png)
+![Open Source Software](/doc/images/open-source-software-logo.png)
+
 Assume you have a serial accessible device (like Raspberry Pi or ESP32 node) that falls into boot loop. If for some reason it is not possible or not convinient to bring your laptop to the device proximity, you can attach Wireless Terminal to the device and connect to it via WiFi. Next you use ESP8266 hosted web-based  terminal as if you were connected directly.
 
 ![image](https://user-images.githubusercontent.com/5459747/169392360-5300c240-e5a9-4d8c-8a79-1b298578029e.png)
@@ -52,6 +55,8 @@ library
 ### Hardware
 
 I've developed custom PCB for this device. This is base don standard ESP12F module and has onboard RGB LED as described above. What's more it has onboard Li-Ion battery (14500 size), alternatively can be powered by external Li-Ion battery via standard connector. Also it has battery management circuit on the board, with charhing from built-in USB port. same port is used for serial flashing.
+
+As usual schematics and design files are available under [hardware](/hardware) section. 
 
 ![image](https://user-images.githubusercontent.com/5459747/177056606-f8d9d947-5051-4807-954d-d0460ebd90e2.png)
 ![image](https://user-images.githubusercontent.com/5459747/177056613-54652ca0-7139-48d3-817c-dfde994896aa.png)
