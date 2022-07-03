@@ -48,3 +48,16 @@ library
 ### Terminal page
 
 ![simplescreenrecorder-2022-05-19_22.08.45.gif](./doc/simplescreenrecorder-2022-05-19_22.08.45.gif)
+
+### Hardware
+
+I've developed custom PCB for this device. This is base don standard ESP12F module and has onboard RGB LED as described above. What's more it has onboard Li-Ion battery (14500 size), alternatively can be powered by external Li-Ion battery via standard connector. Also it has battery management circuit on the board, with charhing from built-in USB port. same port is used for serial flashing.
+
+![image](https://user-images.githubusercontent.com/5459747/177056606-f8d9d947-5051-4807-954d-d0460ebd90e2.png)
+![image](https://user-images.githubusercontent.com/5459747/177056613-54652ca0-7139-48d3-817c-dfde994896aa.png)
+![image](https://user-images.githubusercontent.com/5459747/177056621-1ea97652-e683-4728-80bb-21c54f414b9c.png)
+![image](https://user-images.githubusercontent.com/5459747/177056627-dab257f5-5429-4f34-9b36-2e339714631a.png)
+
+### Where to buy
+
+Soon to ba evailable on Tindie
