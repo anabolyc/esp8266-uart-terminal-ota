@@ -65,4 +65,4 @@ As usual schematics and design files are available under [hardware](/hardware) s
 
 ### Where to buy
 
-Soon to ba available on Tindie
+Available on [Tindie](https://www.tindie.com/products/sonocotta/esp8266-wireless-terminal/)
