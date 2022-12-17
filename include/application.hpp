@@ -111,6 +111,7 @@ protected:
     bool handleRoot();
     void startWifi();
     void halt();
+
     void setState(ApplicationState);
     #ifdef OLED_SCREEN
     void passCharToOled(char c);

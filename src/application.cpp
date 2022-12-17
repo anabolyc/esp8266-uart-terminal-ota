@@ -398,9 +398,11 @@ void Application::handleWebConsole()
 
     ApplicationState prev_state = _state;
     static String line;
+    static uint32_t last_flushed_at;
     while (Serial.available())
     {
         setState(CLIENT_RX);
+
         char chr = Serial.read();
         if ((chr == '\n') || (line.length() >= LINE_MAX))
         {
@@ -408,7 +410,8 @@ void Application::handleWebConsole()
             line.clear();
             #ifdef OLED_SCREEN
             display->display();
-            #endif            
+            #endif
+            last_flushed_at = millis();
         }
         if (chr != '\n')
             line += chr;
@@ -424,6 +427,16 @@ void Application::handleWebConsole()
             display->setCursor(0, 0);
         }
         #endif
+    }
+
+    if ((line.length() > 0) && (millis() > last_flushed_at + 1000))
+    {
+        _webSockServer->broadcastTXT(line);
+        line.clear();
+        #ifdef OLED_SCREEN
+        display->display();
+        #endif
+        last_flushed_at = millis();
     }
 
     setState(prev_state);
