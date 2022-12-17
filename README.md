@@ -66,6 +66,7 @@ After using this revision for some time, I realized that for my usage pattern (o
 | Battery        | 14500 or external Li-Ion battery | N/A                        |
 | Live screen    | N/A                              | OLED screen (8x21 symbols) |
 | Delivered as   | Assebmled PCB                    | DIY Kit or assembled       |
+| Price          | $20                              | $10                        |
 
 Key difference - Revision B has built-in OLED screen. This way some intell you can get even without web-client. 
 
