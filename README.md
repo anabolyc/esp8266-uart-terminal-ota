@@ -54,9 +54,28 @@ library
 
 ### Hardware
 
-I've developed custom PCB for this device. This is base don standard ESP12F module and has onboard RGB LED as described above. What's more it has onboard Li-Ion battery (14500 size), alternatively can be powered by external Li-Ion battery via standard connector. Also it has battery management circuit on the board, with charhing from built-in USB port. same port is used for serial flashing.
+I've developed two PCBs for this device. First revision is based on standard ESP12F module and has onboard RGB LED as described above. What's more it has onboard Li-Ion battery (14500 size), alternatively can be powered by external Li-Ion battery via standard connector. Also it has battery management circuit on the board, with charhing from built-in USB port. Same port is used for serial flashing.
+
+After using this revision for some time, I realized that for my usage pattern (once in a while debug Raspberry Pi boot issues), it can be done simpler. Revision B followed.
+
+|                | Rev A                            | Rev B                      |
+|----------------|----------------------------------|----------------------------|
+|                |                                  |                            |
+| MCU            | ESP12F module                    | Wemos D1 Mini              |
+| Indication LED | RGB Led                          | Blue built-in LED          |
+| Battery        | 14500 or external Li-Ion battery | N/A                        |
+| Live screen    | N/A                              | OLED screen (8x21 symbols) |
+| Delivered as   | Assebmled PCB                    | DIY Kit or assembled       |
+
+Key difference - Revision B has built-in OLED screen. This way some intell you can get even without web-client. 
 
 As usual schematics and design files are available under [hardware](/hardware) section. 
+
+#### Revision B
+
+TBA
+
+#### Revision A
 
 ![image](https://user-images.githubusercontent.com/5459747/177056606-f8d9d947-5051-4807-954d-d0460ebd90e2.png)
 ![image](https://user-images.githubusercontent.com/5459747/177056613-54652ca0-7139-48d3-817c-dfde994896aa.png)
