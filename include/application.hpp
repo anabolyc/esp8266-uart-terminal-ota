@@ -50,12 +50,17 @@ const size_t STACK_MAX_SIZE = 512;
 #define PIN_UART0_RX 13   
 #define PIN_UART0_TX 15
 
-#define PIN_STATUS_LED 12
-#define PIN_STATUS_LED_ON HIGH
-#define PIN_STATUS_LED_RGB 
-
 #ifdef PIN_STATUS_LED_RGB
 #include <FastLED.h>
+#endif
+
+#ifdef OLED_SCREEN
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define SCREEN_ROW_HEIGHT 8
+#define SCREEN_ADDRESS 0x3C
 #endif
 
 #define LED_STATUSES_COUNT 6
@@ -86,6 +91,10 @@ protected:
     ESP8266WebServer *_WebServer;
     WiFiManager* _wifiManager;
 
+    #ifdef OLED_SCREEN
+    Adafruit_SSD1306 *display;
+    #endif
+
     WebSocketsServer *_webSockServer;
 
     FtpServer *_FTPServer;
@@ -103,6 +112,10 @@ protected:
     void startWifi();
     void halt();
     void setState(ApplicationState);
+    #ifdef OLED_SCREEN
+    void passCharToOled(char c);
+    bool inColorSeq = false;
+    #endif
 
 private:
     bool _terminalClientAlreadyConnected = false;

@@ -19,8 +19,8 @@ static uint32_t StatusLedBlinkTimings[LED_STATUSES_COUNT][LED_STATUSES_STATES_CO
     {1024, 16, 0x000080}, // NOT_READY
     {16, 1024, 0x808000}, // READY
     {256, 256, 0x800080}, // CLIENT_CONNECTED
-    {256, 0, 0x008000}, // CLIENT_RX
-    {256, 0, 0x000080}, // CLIENT_TX
+    {256, 0, 0x008000},   // CLIENT_RX
+    {256, 0, 0x000080},   // CLIENT_TX
     {128, 128, 0x800000}  // ERROR
 };
 #else
@@ -29,33 +29,33 @@ static uint32_t StatusLedBlinkTimings[LED_STATUSES_COUNT][LED_STATUSES_STATES_CO
     {1024, 16}, // NOT_READY
     {16, 1024}, // READY
     {256, 256}, // CLIENT_CONNECTED
-    {256, 0}, // CLIENT_RX
-    {256, 0}, // CLIENT_TX
+    {256, 0},   // CLIENT_RX
+    {256, 0},   // CLIENT_TX
     {128, 128}, // ERROR
 };
 #endif
 
 void changeStatusLedStateOn()
 {
-    #ifdef PIN_STATUS_LED_RGB
+#ifdef PIN_STATUS_LED_RGB
     for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
         leds[0] = led_color;
     FastLED.show();
-    #else 
+#else
     digitalWrite(PIN_STATUS_LED, PIN_STATUS_LED_ON);
-    #endif
+#endif
     _blinker->once_ms(led_time_on, changeStatusLedStateOff);
 }
 
 void changeStatusLedStateOff()
 {
-    #ifdef PIN_STATUS_LED_RGB
+#ifdef PIN_STATUS_LED_RGB
     for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
         leds[0] = 0x0;
     FastLED.show();
-    #else 
+#else
     digitalWrite(PIN_STATUS_LED, !PIN_STATUS_LED_ON);
-    #endif
+#endif
     _blinker->once_ms(led_time_off, changeStatusLedStateOn);
 }
 
@@ -70,10 +70,14 @@ Application::Application()
     _FTPServer = new FtpServer();
     _wifiManager = new WiFiManager();
 
+#ifdef OLED_SCREEN
+    display = new Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
+#endif
+
     setState(NOT_READY);
 }
 
-void Application::setState(ApplicationState state) 
+void Application::setState(ApplicationState state)
 {
     if (state == _state)
         return;
@@ -86,42 +90,51 @@ void Application::setState(ApplicationState state)
 
     led_time_on = StatusLedBlinkTimings[(int)state][0];
     led_time_off = StatusLedBlinkTimings[(int)state][1];
-    #ifdef PIN_STATUS_LED_RGB
+#ifdef PIN_STATUS_LED_RGB
     led_color = StatusLedBlinkTimings[(int)state][2];
-    #endif
+#endif
 
-    if (led_time_off == 0) {
-        // no need to switch off
-        #ifdef PIN_STATUS_LED_RGB
+    if (led_time_off == 0)
+    {
+// no need to switch off
+#ifdef PIN_STATUS_LED_RGB
         for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
             leds[0] = led_color;
         FastLED.show();
-        #else 
+#else
         digitalWrite(PIN_STATUS_LED, PIN_STATUS_LED_ON);
-        #endif
-    } else if (led_time_on == 0) {
-        // no need to switch on
-        #ifdef PIN_STATUS_LED_RGB
+#endif
+    }
+    else if (led_time_on == 0)
+    {
+// no need to switch on
+#ifdef PIN_STATUS_LED_RGB
         for (uint8_t i = 0; i < PIN_STATUS_LED_COUNT; i++)
             leds[0] = 0;
         FastLED.show();
-        #else 
+#else
         digitalWrite(PIN_STATUS_LED, !PIN_STATUS_LED_ON);
-        #endif
-    } else {
+#endif
+    }
+    else
+    {
         // trigger blinking
         changeStatusLedStateOn();
     }
 }
 
-void Application::startWifi() {
+void Application::startWifi()
+{
     String ssid = "ESP-" + String(ESP.getChipId());
     WiFi.hostname(ssid);
 
-    if(!_wifiManager->autoConnect()) {
+    if (!_wifiManager->autoConnect())
+    {
         logger->println("Failed to connect and hit timeout");
         ESP.reset();
-    } else {
+    }
+    else
+    {
         logger->print("Connected: ");
         logger->println(WiFi.localIP());
     }
@@ -226,7 +239,8 @@ void Application::handleTerminalClient()
         setState(CLIENT_CONNECTED);
     }
 
-    while (_terminalClient.available() && Serial.availableForWrite() > 0) {
+    while (_terminalClient.available() && Serial.availableForWrite() > 0)
+    {
         ApplicationState prev_state = _state;
         setState(CLIENT_TX);
         Serial.write(_terminalClient.read());
@@ -293,11 +307,11 @@ void Application::handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payl
 
 void Application::initialize()
 {
-    #ifdef PIN_STATUS_LED_RGB
+#ifdef PIN_STATUS_LED_RGB
     FastLED.addLeds<WS2812B, PIN_STATUS_LED, GRB>(leds, PIN_STATUS_LED_COUNT);
-    #else
+#else
     pinMode(PIN_STATUS_LED, OUTPUT);
-    #endif
+#endif
 
     logger->begin(DEFAULT_BAUD_LOGGER);
     logger->println(FPSTR(WELCOME_STRING));
@@ -315,9 +329,9 @@ void Application::initialize()
     Serial.setRxBufferSize(RX_BUFFER_SIZE);
 
     startWifi();
-    
+
     setState(READY);
-    
+
     _WebServer->on(FPSTR(HTTP_SAVE_LINK), [&]() mutable
                    { this->handleSettingsSave(); });
     _WebServer->on(FPSTR(HTTP_CONF_LINK), [&]() mutable
@@ -333,6 +347,21 @@ void Application::initialize()
     _webSockServer->begin();
     _webSockServer->onEvent([&](uint8_t num, WStype_t type, uint8_t *payload, size_t length) mutable
                             { this->handleWebSocketEvent(num, type, payload, length); });
+
+#ifdef OLED_SCREEN
+    if (!display->begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+    {
+        Serial.println(F("SSD1306 allocation failed"));
+    }
+
+    display->clearDisplay();
+
+    display->setTextSize(1);
+    display->setTextColor(SSD1306_WHITE);
+    display->setCursor(0, 0);
+    display->cp437(true);
+    display->display();
+#endif
 }
 
 void Application::mainloop()
@@ -340,6 +369,7 @@ void Application::mainloop()
     _webSockServer->loop();
     _FTPServer->handleFTP();
     _WebServer->handleClient();
+
     this->handleTerminalClient();
     this->handleWebConsole();
 }
@@ -376,11 +406,44 @@ void Application::handleWebConsole()
         {
             _webSockServer->broadcastTXT(line);
             line.clear();
+            #ifdef OLED_SCREEN
+            display->display();
+            #endif            
         }
         if (chr != '\n')
             line += chr;
         logger->print(chr);
+
+        #ifdef OLED_SCREEN
+        
+        passCharToOled(chr);
+
+        if (display->getCursorY() > SCREEN_HEIGHT - SCREEN_ROW_HEIGHT)
+        {
+            display->clearDisplay();
+            display->setCursor(0, 0);
+        }
+        #endif
     }
 
     setState(prev_state);
 }
+
+#ifdef OLED_SCREEN
+void Application::passCharToOled(char c) {
+    // Serial.printf("|%#02x|", c);
+    switch (c) {
+        case 0x1B:
+            inColorSeq = true;
+            break;
+        case 'm':
+            if (inColorSeq) {
+                inColorSeq = false;
+                break;
+            }
+        default:
+            if (!inColorSeq)
+                display->print(c);
+    }
+}
+#endif
