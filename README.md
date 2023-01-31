@@ -72,9 +72,9 @@ Key difference - Revision B has built-in OLED screen. This way some intell you c
 
 As usual schematics and design files are available under [hardware](/hardware) section. 
 
-|                | Rev B                            | Rev A                     |
-|----------------|----------------------------------|----------------------------|
-|                |    ![image](https://user-images.githubusercontent.com/5459747/215735086-21e40fa5-8062-499b-965f-d887e804dac0.png)     |           ![image](https://user-images.githubusercontent.com/5459747/215735719-c3a61b13-57ec-4bf4-ac32-27d0162e0f54.png)               |
+| Rev B                            | Rev A                     |
+|----------------------------------|----------------------------|
+|    ![image](https://user-images.githubusercontent.com/5459747/215735086-21e40fa5-8062-499b-965f-d887e804dac0.png)     |           ![image](https://user-images.githubusercontent.com/5459747/215735719-c3a61b13-57ec-4bf4-ac32-27d0162e0f54.png)               |
 
 ## Known issue
 
