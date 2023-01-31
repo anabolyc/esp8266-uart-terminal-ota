@@ -72,16 +72,13 @@ Key difference - Revision B has built-in OLED screen. This way some intell you c
 
 As usual schematics and design files are available under [hardware](/hardware) section. 
 
-#### Revision B
+|                | Rev B                            | Rev A                     |
+|----------------|----------------------------------|----------------------------|
+|                |    ![image](https://user-images.githubusercontent.com/5459747/215735086-21e40fa5-8062-499b-965f-d887e804dac0.png)     |           ![image](https://user-images.githubusercontent.com/5459747/215735719-c3a61b13-57ec-4bf4-ac32-27d0162e0f54.png)               |
 
-TBA
+## Known issue
 
-#### Revision A
-
-![image](https://user-images.githubusercontent.com/5459747/177056606-f8d9d947-5051-4807-954d-d0460ebd90e2.png)
-![image](https://user-images.githubusercontent.com/5459747/177056613-54652ca0-7139-48d3-817c-dfde994896aa.png)
-![image](https://user-images.githubusercontent.com/5459747/177056621-1ea97652-e683-4728-80bb-21c54f414b9c.png)
-![image](https://user-images.githubusercontent.com/5459747/177056627-dab257f5-5429-4f34-9b36-2e339714631a.png)
+Serial Target TX lines is multiplexed with GPIO15 bootstrapping pin. Unfortunately it ESP will fail to boot it it pulled up on start. Depending on the target device (specifically RX line level on boot) ESP might fail to start, when TX line is connected. It will drop to download mode instead. Workaround is to connect TX line _after_ powering ESP
 
 ### Where to buy
 
